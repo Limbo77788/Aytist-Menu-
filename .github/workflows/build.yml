@@ -1,0 +1,38 @@
+name: Build Mod
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ android ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Geode CLI
+        run: |
+          curl -L https://get.geode-sdk.org | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Setup Geode SDK
+        run: |
+          geode sdk install ${{ matrix.platform }}
+          geode sdk install-binaries ${{ matrix.platform }}
+
+      - name: Build Mod
+        run: |
+          geode build -p ${{ matrix.platform }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: build/*.geode
